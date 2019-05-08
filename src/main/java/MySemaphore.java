@@ -1,11 +1,22 @@
+import sun.awt.Mutex;
+
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+
 public class MySemaphore extends Semaphore {
     private int permits;
+
+    ReentrantLock locker;
+    Condition condition;
 
     public MySemaphore(int permits) {
         super(permits);
 
         this.permits = permits;
+
+        locker = new ReentrantLock(); // создаем блокировку
+        condition = locker.newCondition(); // получаем условие, связанное с блокировкой
     }
 
     public MySemaphore(int permits, boolean fair) {
@@ -13,24 +24,31 @@ public class MySemaphore extends Semaphore {
     }
 
     @Override
-    public synchronized void acquire() {
-        if(permits > 0){
+    public void acquire() {
+        locker.lock();
+        try{
+            //пока нет слота, ожидаем
+            while (permits < 1)
+                condition.await();
+
             permits--;
-        }else{
-            try {
-                this.wait();
-                permits--;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
+        catch (InterruptedException e){
+            System.out.println(e.getMessage());
+        }
+        locker.unlock();
     }
 
     @Override
-    public synchronized void release(){
+    public void release(){
+        locker.lock();
+
         permits++;
         if(permits > 0)
-            this.notify();
+            // сигнализируем
+            condition.signalAll();
+
+        locker.unlock();
     }
 
 

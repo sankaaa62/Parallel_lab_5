@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Application {
     public static void main(String[] args) throws InterruptedException {
-        Semaphore sem = new MySemaphore(1);
+        Semaphore sem = new MySemaphore(2);
         CommonResource res = new CommonResource();
         int pool = 10;
 
